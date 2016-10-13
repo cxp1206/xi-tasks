@@ -1,0 +1,20 @@
+{
+  "name": "xi-tasks",
+  "version": "1.0.0",
+  "description": "一个任务调度程序,方便组织各个任务",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "bin":{
+    "ktask":"./bin/jobs.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "commander": "^2.9.0",
+    "ioredis": "^2.4.0",
+    "koa": "^1.2.4",
+    "node-schedule": "^1.1.1"
+  }
+}
