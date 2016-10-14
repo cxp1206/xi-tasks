@@ -5,7 +5,7 @@
 
 exports.defaultJobDes = {
     name:'schedule:job:name',//任务名称
-    module:'schedule:job:module',//文件夹名称,在jobs文件夹中.每个文件夹必须有一个index文件,对外输出start方法
+    module:'schedule:job:module',//任务执行的相对于程序根目录的文件夹或文件名称,每个文件夹必须有一个index文件,对外输出start方法
     state:1,//任务状态
     createdAt:new Date,
     lastRunning:new Date,

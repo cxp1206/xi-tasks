@@ -14,32 +14,42 @@ var co = require('co');
       * */
      constructor(){
          new loader(this);
-         
+         this.rootPath = path.join(__dirname,'../');
+
      }
      /**
-      * 添加任务,此时没有对任务进行启动,只是将任务信息进行存储
-      * 传入参数名称需要和configs中的名称一致,如果找不到,会默认使用defaultJobDes
+      * @method addJob 添加任务,此时没有对任务进行启动,只是将任务信息进行存储
+      * @param {string|object} config 如果为字符串,需要和configs中的名称一致,
+      * 如果找不到,会默认使用defaultJobDes.
+      * 如果为对象,则结构与defaultJobDes一致.
       * */
-     addJob(configName){
+     addJob(config){
+         let configName='',data='';
+         let defaultData = require('../configs/defaultJobDes').defaultJobDes;
          let dinfo = this.libs['debugInfo'],derror = this.libs['debugError'];
-         if(!configName){
+         if(!config){
              dinfo('没有输入任务名称,请输入');
              return;
          }
-         let fsPath = path.join(__dirname,'../configs/',configName+'.js');
-         let isExit=true,data;
-         let defaultData = require('../configs/defaultJobDes').defaultJobDes;
-         try{
-             fs.accessSync(fsPath) ;
-             data = Object.assign({},defaultData,require(fsPath)[configName]);
-         }catch(e){
-             isExit = false;
-            data = defaultData;
-         }
-         //加载任务信息
-         if(!data){
-             //如果没有找到,则重新加载默认的任务信息
-             data=require('../configs/defaultJobDes').defaultJobDes;
+         if(typeof config ==='string'){
+             configName = config;
+             let fsPath = path.join(__dirname,'../configs/',configName+'.js');
+             let isExit=true;
+
+             try{
+                 fs.accessSync(fsPath) ;
+                 data = Object.assign({},defaultData,require(fsPath)[configName]);
+             }catch(e){
+                 isExit = false;
+                 data = defaultData;
+             }
+             //加载任务信息
+             if(!data){
+                 //如果没有找到,则重新加载默认的任务信息
+                 data=require('../configs/defaultJobDes').defaultJobDes;
+             }
+         }else if(typeof config === 'object'){//直接传入任务描述
+             data = Object.assign({},defaultData,config);
          }
          //将任务添加到redis中存储
          this._saveIntoRedis(data);
@@ -71,11 +81,14 @@ var co = require('co');
 
      /**
       * 启动任务,
-      * 传入参数为任务名称
+      * 传入参数为任务名称和执行根目录
       * */
-     excuteJob(name){
+     excuteJob(name,rootPath){
          let self = this,client = this.redisClient;
          let dinfo = this.libs['debugInfo'],derror = this.libs['debugError'];
+         if(!rootPath){
+             rootPath=this.rootPath;
+         }
          co(function *() {
              //获取任务信息
              let jobModelPath = yield client.hget('jobs:'+name,'module'),
@@ -91,8 +104,9 @@ var co = require('co');
                  dinfo('[%s]:schedule is not config module name',name);
                  return ;
              }
-             
-              let jobModel = require('./'+jobModelPath);
+             console.log(__dirname);
+             jobModelPath = path.join(rootPath,jobModelPath);
+              let jobModel = require(jobModelPath);
             let jobs = self.libs['node-schedule'].scheduleJob(name,jobRule,function () {
                  dinfo('[%s]:schedule is running',name);
                  //执行任务中的相应的处理逻辑
